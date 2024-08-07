@@ -3,31 +3,59 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Cat, Heart, Info, Paw, Star } from "lucide-react";
+import { Cat, Heart, Info, Paw, Star, ArrowLeft, ArrowRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 const Index = () => {
   const [likes, setLikes] = useState(0);
   const [showAlert, setShowAlert] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const catImages = [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/1200px-Cat03.jpg",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/1200px-Cat_November_2010-1a.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Kittyply_edit1.jpg/1200px-Kittyply_edit1.jpg"
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Kittyply_edit1.jpg/1200px-Kittyply_edit1.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Sleeping_cat_on_her_back.jpg/1200px-Sleeping_cat_on_her_back.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/False_alarm_-a_Flickr.jpg/1200px-False_alarm_-a_Flickr.jpg"
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % catImages.length);
+      if (!isHovering) {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % catImages.length);
+        setProgress(0);
+      }
     }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+
+    const progressInterval = setInterval(() => {
+      if (!isHovering) {
+        setProgress((prevProgress) => (prevProgress + 1) % 100);
+      }
+    }, 50);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(progressInterval);
+    };
+  }, [isHovering]);
 
   const handleLike = () => {
     setLikes(likes + 1);
     setShowAlert(true);
     setTimeout(() => setShowAlert(false), 3000);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + catImages.length) % catImages.length);
+    setProgress(0);
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % catImages.length);
+    setProgress(0);
   };
 
   return (
@@ -50,6 +78,8 @@ const Index = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           className="relative"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
         >
           <AnimatePresence mode="wait">
             <motion.img 
@@ -63,6 +93,26 @@ const Index = () => {
               transition={{ duration: 0.5 }}
             />
           </AnimatePresence>
+          <motion.div 
+            className="absolute top-1/2 left-4 transform -translate-y-1/2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isHovering ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Button variant="outline" size="icon" onClick={handlePrevImage}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </motion.div>
+          <motion.div 
+            className="absolute top-1/2 right-4 transform -translate-y-1/2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isHovering ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Button variant="outline" size="icon" onClick={handleNextImage}>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </motion.div>
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
             {catImages.map((_, index) => (
               <motion.div
@@ -75,6 +125,9 @@ const Index = () => {
             ))}
           </div>
         </motion.div>
+        <div className="mb-8">
+          <Progress value={progress} className="w-full" />
+        </div>
 
         <AnimatePresence>
           {showAlert && (
@@ -165,14 +218,18 @@ const Index = () => {
           </TabsContent>
         </Tabs>
 
-        <div className="text-center">
+        <motion.div 
+          className="text-center"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <Button 
             onClick={handleLike}
             className="bg-pink-500 hover:bg-pink-600 text-xl py-6 px-8"
           >
             <Heart className="mr-3" size={24} /> Like Cats ({likes})
           </Button>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
